@@ -1,8 +1,5 @@
 # Instruction
 =======
-Viewer
-======
-
 Assignment of C# Programming of SCAU. A light-weight and function-less image viewer implements with WPF.
 
 rt, 就是一个 C# + WPF 写的渣渣图片浏览器, 用来应付课程作业的. 由于是用VS以及内建库写出来的东东所以支持的解码格式什么的就不用指望了.  
@@ -19,7 +16,7 @@ rt, 就是一个 C# + WPF 写的渣渣图片浏览器, 用来应付课程作业的. 由于是用VS以及内建
 命令行参数调用
 `Usage: Viewer image_file_name`
 
-* GUI Manipulation
+# GUI Manipulation
 ======
 模式制, 初始为无模式, 通过以下按键切换
 <blockquote>
@@ -39,5 +36,3 @@ rt, 就是一个 C# + WPF 写的渣渣图片浏览器, 用来应付课程作业的. 由于是用VS以及内建
 
 ## 缩放模式
 * 使用鼠标滚轮缩放图片, 以鼠标光标为缩放中心
-=======
->>>>>>> GitHub-Viewer/master
