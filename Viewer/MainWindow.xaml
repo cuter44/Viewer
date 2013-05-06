@@ -9,7 +9,7 @@
         <Image x:Name="ImagePanel"
             HorizontalAlignment="Left" Height="100" Margin="0"
             VerticalAlignment="Top" Width="100"
-            MouseLeftButtonDown="DragImageStart" MouseLeftButtonUp="DragImageEnd" MouseMove="OnMouseMove" RenderTransformOrigin="0,0" ScrollViewer.VerticalScrollBarVisibility="Disabled" MouseWheel="OnMouseWheelReact">
+            MouseLeftButtonDown="OnLeftClickImage" MouseMove="OnMouseMove" RenderTransformOrigin="0,0" ScrollViewer.VerticalScrollBarVisibility="Disabled" MouseWheel="OnMouseWheel">
             <Image.RenderTransform>
                 <TransformGroup x:Name="TransGroup">
                     <ScaleTransform x:Name="ScaleTrans"/>

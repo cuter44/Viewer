@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Math;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -24,9 +23,14 @@ namespace Viewer
         // 文件名交换
         string initalFilename;
         string currentDisplayFilename;
-        // 拖动
-        Point dragPosDelta;
-        bool dragStatus;
+        // 模式
+        int ControlMode = 0;
+        int CompoundMode = 0;
+        const int DragMode = 1;
+        const int ScaleMode = 2;
+        const int RotateMode = 4;
+        // 线性变换
+        Point DragStartPos;
         // 旋转
         double wheelFactorRotate=0.04;
         // 缩放
@@ -44,11 +48,6 @@ namespace Viewer
         }
 
     // Functions
-        public static double deg2rad(double degree)
-        {
-            return(degree/180.0*Math.PI);
-        }
-
         public void DisplayImage(string filename)
         {
             currentDisplayFilename = filename;
@@ -72,32 +71,42 @@ namespace Viewer
         {
             TransTrans.X += deltaX;
             TransTrans.Y += deltaY;
-            LabelTranslate.Content = "Translate " + TransTrans.X + "," + TransTrans.Y;
+            //LabelTranslate.Content = "Translate " + TransTrans.X + "," + TransTrans.Y;
+        }
+
+        private void TranslateImageTo(double abslouteX, double abslouteY)
+        {
+            TransTrans.X = abslouteX;
+            TransTrans.Y = abslouteY;
         }
 
         private void RotateImage(double deltaAngle)
         {
-            Point center = Mouse.GetPosition(ImagePanel);
-            GeneralTransform inverseTrans = TransGroup.Inverse;
-            center = inverseTrans.Transform(center);
+            Point mouse = Mouse.GetPosition(ImagePanel);
+            Point origin = TransGroup.Transform(mouse);
             
             RotateTrans.Angle += deltaAngle;
+            // 调试
             LabelRotate.Content = "Rotate " + RotateTrans.Angle;
+
+            // 位移补偿
+            Point alter = TransGroup.Transform(mouse);
+            TranslateImage(origin.X - alter.X, origin.Y - alter.Y);
         }
 
         private void ScaleImage(double deltaMultiple)
         {
             Point mouse = Mouse.GetPosition(ImagePanel);
+            Point origin = TransGroup.Transform(mouse);
 
             ScaleTrans.ScaleX += deltaMultiple;
             ScaleTrans.ScaleY += deltaMultiple;
-            LabelScale.Content = "Scale " + ScaleTrans.ScaleX + "," + ScaleTrans.ScaleY;
+            // 调试
+            //LabelScale.Content = "Scale " + ScaleTrans.ScaleX + "," + ScaleTrans.ScaleY;
            
             // 位移补偿
-            TranslateImage(
-                -((mouse.X*Math.Cos(deg2rad(RotateTrans.Angle)) + Mouse.Y*Math.Cos(deg2rad(RotateTrans.Angle)+Math.PI/2))*deltaMultiple,
-                -((mouse.X*Math.Sin(deg2rad(RotateTrans.Angle)) + Mouse.Y*Math.Cos(deg2rad(RotateTrans.Angle)+Math.PI/2))*deltaMultiple,
-            );
+            Point alter = TransGroup.Transform(mouse);
+            TranslateImage(origin.X - alter.X, origin.Y - alter.Y);
         }
 
         private void RestoreImage()
@@ -110,57 +119,57 @@ namespace Viewer
             RotateTrans.Angle = 0;
         }
 
-        private void DragImageStart(object sender, MouseButtonEventArgs e)
+        private void DragImage()
         {
-            dragPosDelta = e.GetPosition(ImagePanel);
-            dragStatus = true;
-        }
+            Point mouseOnWin = Mouse.GetPosition(MainWin);
+            //Point mouseOnImage = TransGroup.Transform(DragStartPos);
 
-        private void DragImageEnd(object sender, MouseButtonEventArgs e)
-        {
-            dragStatus = false;
-        }
-
-        private void DragImage(object sender, MouseEventArgs e)
-        {
-            if (dragStatus)
-            {
-                Point currentMouseAt = Mouse.GetPosition(MainWin);
-                //ImagePanel.Left = currentMouseAt.X - dragPosDelta.X;
-                //ImagePanel.Top = currentMouseAt.Y - dragPosDelta.Y;
-            }
+            TranslateImageTo(mouseOnWin.X - DragStartPos.X, mouseOnWin.Y - DragStartPos.Y);
         }
 
     // Direct Event Listener
+        private void OnLeftClickImage(object sender, MouseButtonEventArgs e)
+        {
+            if ((ControlMode & DragMode)!=0)
+                DragStartPos = ScaleTrans.Transform(RotateTrans.Transform(Mouse.GetPosition(ImagePanel)));
+        }
+
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
-            LabelMousePosWin.Content = "WinPos " + Mouse.GetPosition(MainWin);
-            LabelMousePosImage.Content = "ImagePos" + Mouse.GetPosition(ImagePanel);
-            DragImage(sender, e);
+            if (((ControlMode & DragMode) != 0) && (Mouse.LeftButton == MouseButtonState.Pressed))
+                DragImage();
         }
 
         private void OnKeyPress(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Escape)
-                Application.Current.Shutdown();
+            {
+                if (ControlMode == 0)
+                    Application.Current.Shutdown();
+                if (ControlMode != 0)
+                    ControlMode = 0;
+            }
             if (e.Key == Key.Z)
                 RestoreImage();
-            //if (e.Key == Key.R)
-            //    Cursor = Cursors.Cross;
+            if (e.Key == Key.V)
+                ControlMode = (ControlMode * CompoundMode) ^ DragMode;
+            if (e.Key == Key.S)
+                ControlMode = (ControlMode * CompoundMode) ^ ScaleMode;
+            if (e.Key == Key.R)
+                ControlMode = (ControlMode * CompoundMode) ^ RotateMode;
         }
 
         private void OnKeyRelease(object sender, KeyEventArgs e)
         {
-            //if (e.Key == Key.R)
-            //    Cursor = Cursors.Arrow;
         }
 
-        private void OnMouseWheelReact(object sender, MouseWheelEventArgs e)
+        private void OnMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if (Keyboard.IsKeyDown(Key.R))
+            if ((ControlMode & RotateMode) != 0)
                 RotateImage(e.Delta * wheelFactorRotate);
-            if (Keyboard.IsKeyDown(Key.S))
+            if ((ControlMode & ScaleMode) != 0)
                 ScaleImage(e.Delta * wheelFactorScale);
         }
+
     }
 }

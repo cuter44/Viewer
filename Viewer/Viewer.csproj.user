@@ -4,4 +4,7 @@
     <StartArguments>"C:\Users\Administrator\Desktop\[鴨志田一] さくら荘のペットな彼女 第02巻\p002-003.jpg"</StartArguments>
     <EnableUnmanagedDebugging>true</EnableUnmanagedDebugging>
   </PropertyGroup>
+  <PropertyGroup>
+    <ProjectView>ProjectFiles</ProjectView>
+  </PropertyGroup>
 </Project>
