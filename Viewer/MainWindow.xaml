@@ -3,13 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="MainWindow" 
         ResizeMode="NoResize" 
-        WindowStartupLocation="CenterScreen" WindowState="Maximized" Background="Black" WindowStyle="None" AllowsTransparency="True" KeyDown="OnKeyPress" KeyUp="OnKeyRelease" Opacity="0.8">
+        WindowStartupLocation="CenterScreen" WindowState="Maximized" Background="Black" WindowStyle="None" AllowsTransparency="True" KeyDown="OnKeyPress" KeyUp="OnKeyRelease" Opacity="0.85" MouseLeftButtonDown="OnLButtonPressed" MouseMove="OnMouseMove" MouseWheel="OnMouseWheel" MouseRightButtonDown="OnRButtonPressed" MouseRightButtonUp="OnRButtonReleased">
     <Grid RenderTransformOrigin="0.5,0.5">
         <!--<ContentControl RenderTransformOrigin="0.5,0.5" MouseLeftButtonDown="ClickBlankReact">-->
         <Image x:Name="ImagePanel"
-            HorizontalAlignment="Left" Height="100" Margin="0"
-            VerticalAlignment="Top" Width="100"
-            MouseLeftButtonDown="OnLeftClickImage" MouseMove="OnMouseMove" RenderTransformOrigin="0,0" ScrollViewer.VerticalScrollBarVisibility="Disabled" MouseWheel="OnMouseWheel">
+            HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0"
+            Width="100" Height="100" 
+            RenderTransformOrigin="0,0" ScrollViewer.VerticalScrollBarVisibility="Disabled">
             <Image.RenderTransform>
                 <TransformGroup x:Name="TransGroup">
                     <ScaleTransform x:Name="ScaleTrans"/>
@@ -22,11 +22,13 @@
                 <ImageBrush x:Name="ImagePanelRenderer"/>
             </Canvas.Background>-->
         </Image>
-        <Label x:Name="LabelTranslate" Content="Label" HorizontalAlignment="Right" VerticalAlignment="Bottom" Foreground="White" Margin="0,0,0,96"/>
-        <Label x:Name="LabelRotate" Content="Label" HorizontalAlignment="Right" VerticalAlignment="Bottom" BorderThickness="0" Margin="0,0,0,72" Foreground="White"/>
-        <Label x:Name="LabelScale" Content="Label" HorizontalAlignment="Right" Margin="0,0,0,48" VerticalAlignment="Bottom" HorizontalContentAlignment="Right" VerticalContentAlignment="Bottom" Foreground="White"/>
-        <Label x:Name="LabelMousePosImage" Content="Label" HorizontalAlignment="Right" Margin="0,0,0,24" Foreground="White" VerticalAlignment="Bottom"/>
-        <Label x:Name="LabelMousePosWin" Content="Label" HorizontalAlignment="Right" VerticalAlignment="Bottom" Foreground="White"/>
+        <Button x:Name="ExitButton" Content="×"
+                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0"
+                BorderBrush="{x:Null}" BorderThickness="0" Foreground="White" Background="{x:Null}" 
+                Width="64" Height="64" FontSize="48"
+                IsTabStop="False" 
+                Click="OnClickXButton"
+                FontWeight="Bold" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
         <!--</ContentControl>-->
     </Grid>
 </Window>
