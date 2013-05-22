@@ -3,13 +3,22 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="MainWindow" 
         ResizeMode="NoResize" 
-        WindowStartupLocation="CenterScreen" WindowState="Maximized" Background="Black" WindowStyle="None" AllowsTransparency="True" KeyDown="MainWin_OnKeyPress" KeyUp="MainWin_OnKeyRelease" Opacity="0.85" MouseLeftButtonDown="MainWin_OnLButtonPressed" MouseMove="MainWin_OnMouseMove" MouseWheel="MainWin_OnMouseWheel" MouseRightButtonDown="MainWin_OnRButtonPressed" MouseRightButtonUp="MainWin_OnRButtonReleased">
+        WindowStartupLocation="CenterScreen" WindowState="Maximized" Background="Black" KeyDown="MainWin_OnKeyPress" KeyUp="MainWin_OnKeyRelease" MouseLeftButtonDown="MainWin_OnLButtonPressed" MouseMove="MainWin_OnMouseMove" MouseWheel="MainWin_OnMouseWheel" MouseRightButtonDown="MainWin_OnRButtonPressed" MouseRightButtonUp="MainWin_OnRButtonReleased" Opacity="0.9" AllowsTransparency="True" WindowStyle="None">
     <Grid RenderTransformOrigin="0.5,0.5">
-        <!--<ContentControl RenderTransformOrigin="0.5,0.5" MouseLeftButtonDown="ClickBlankReact">-->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="64"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="192" />
+            <ColumnDefinition Width="64"/>
+        </Grid.ColumnDefinitions>
         <Image x:Name="ImagePanel"
             HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0"
             Width="100" Height="100" 
-            RenderTransformOrigin="0,0" ScrollViewer.VerticalScrollBarVisibility="Disabled">
+            RenderTransformOrigin="0,0" ScrollViewer.VerticalScrollBarVisibility="Disabled"
+            Grid.RowSpan="2" Grid.ColumnSpan="3">
             <Image.RenderTransform>
                 <TransformGroup x:Name="TransGroup">
                     <ScaleTransform x:Name="ScaleTrans"/>
@@ -22,29 +31,120 @@
                 <ImageBrush x:Name="ImagePanelRenderer"/>
             </Canvas.Background>-->
         </Image>
-        <!--<ScrollViewer Height="120" Margin="0"
-                      VerticalAlignment="Bottom"
-                      Foreground="{x:Null}"
-                      VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Auto">
-        <StackPanel x:Name="ImageDock" Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button Width="250" />
-            <Button Width="200" />
-            <Button Width="200" />
-            <Button Width="375" />
-        </StackPanel>
-        </ScrollViewer>-->
         <Button x:Name="ExitButton" Content="×"
                 HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0"
                 BorderBrush="{x:Null}" BorderThickness="0" Foreground="White" Background="{x:Null}" 
                 Width="64" Height="64" FontSize="48"
                 IsTabStop="False" 
                 Click="OnClickXButton"
-                FontWeight="Bold" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"/>
+                FontWeight="Bold" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+                Grid.Column="2"/>
+        <Grid x:Name="ControlPane" 
+              Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+              Background="Black" Opacity="0.85"
+              KeyDown="ControlPane_KeyDown">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="128"/>
+                <RowDefinition Height="64"/>
+                <RowDefinition Height="64"/>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="64" />
+                <ColumnDefinition Width="64" />
+                <ColumnDefinition Width="64" />
+                <ColumnDefinition Width="64" />
+            </Grid.ColumnDefinitions>
+            <Canvas x:Name ="BarDiagram"
+                    Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" />
+            <Label x:Name="LblInfo"
+                   Grid.Row="1" Grid.ColumnSpan="4"
+                   Foreground="White" ScrollViewer.CanContentScroll="True" />
+            <GridSplitter Grid.Row="1" Grid.ColumnSpan="4" Height="2"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="Gray"
+                          ResizeDirection="Rows"/>
+            <Label x:Name="LblTransform"
+                   Grid.Row="2" Grid.ColumnSpan="4"
+                   Foreground="White" ScrollViewer.CanContentScroll="True" />
+            <GridSplitter Grid.Row="2" Grid.ColumnSpan="4" Height="2"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="Gray"
+                          ResizeDirection="Rows"/>
+            <Button Content="重载"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="3" Grid.Column ="0" Click="BtnReload_Click"
+                    />
+            <Button Content="上一个(K)"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="3" Grid.Column ="1"
+                    Click="BtnPrev_Click"/>
+            <Button Content="重置(Z)"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="3" Grid.Column ="2"
+                    Click="BtnReset_Click"/>
+            <Button Content="下一个(J)"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="3" Grid.Column ="3"
+                    Click="BtnNext_Click"/>
+            <Button Content="移动(V)"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="4" Grid.Column ="0"
+                    Click="BtnMove_Click"/>
+            <Button Content="置中"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="4" Grid.Column="2"/>
+            <Button Content="缩放(S)"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="5" Grid.Column="0" Click="BtnScale_Click"/>
+            <Button Content="适应"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="5" Grid.Column="2"/>
+            <Button Content="旋转(R)"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="6" Grid.Column="0" Click="BtnRotate_Click"/>
+            <Button Content="逆 90°"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="6" Grid.Column="1"/>
+            <Button Content="铅直"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="6" Grid.Column="2"/>
+            <Button Content="顺 90°"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="6" Grid.Column="3"/>
+            <Label Content="灰度(8位)"
+                   Grid.Row="7" 
+                   HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="White"/>
+            <Button Content="均值"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="7" Grid.Column="1" Tag="1" Click="BtnGray1_Click"/>
+            <Button Content="加权"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="7" Grid.Column="2" Tag="2" Click="BtnGray2_Click"/>
+            <Button Content="二次"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="7" Grid.Column="3" Tag="3" Click="BtnGray3_Click"/>
+            <Label Content="直方图"
+                   Grid.Row="8" 
+                   HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="White"/>
+            <Button Content="灰度"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="8" Grid.Column="1" Tag="3"/>
+            <Button Content="RGB"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="8" Grid.Column="2" Tag="3"/>
+        </Grid>
         <ScrollViewer x:Name="ImageGridPanel"
                       VerticalScrollBarVisibility="Auto"
                       Margin="0"
-                      Background="Black" Opacity="0.75"
-                      KeyDown="ImageGridPanel_KeyDown" Visibility="Collapsed">
+                      Background="Black" Opacity="0.85"
+                      KeyDown="ImageGridPanel_KeyDown" Visibility="Collapsed"
+                      Grid.Row="1"
+                      Grid.ColumnSpan="3" Grid.RowSpan="1" BorderThickness="8" BorderBrush="White">
             <WrapPanel x:Name="ImageGrid" />
         </ScrollViewer>
         <!--</ContentControl>-->

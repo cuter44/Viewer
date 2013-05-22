@@ -29,6 +29,8 @@ namespace Viewer
         string CurrentDisplayFilename;
         // 当前显示文件索引
         int CurrentDisplayIndex = -1;
+        // 当前显示图片引用
+        BitmapSource CurrentDisplayImage;
         // 文件夹内图片文件列表
         List<string> FileList;
       // 模式
@@ -55,6 +57,13 @@ namespace Viewer
       // 缩放
         // 滚轮缩放因子
         double WheelScaleFactor=0.0008;
+      // 灰度化
+        // 可以进行灰度化的格式
+        List<PixelFormat> graySupported = new List<PixelFormat> {
+            PixelFormats.Bgr24,
+            PixelFormats.Bgr32,
+            PixelFormats.Bgra32
+        };
 
         public MainWindow()
         {
@@ -92,27 +101,27 @@ namespace Viewer
                                 new Action(
                                     delegate()
                                     {
-                                        Image img = new Image();
+                                        Image CurrentDisplayImage = new Image();
 
-                                        img.Source = new BitmapImage(new Uri(iterator.FullName));
-                                        img.Width = 128;
-                                        img.Height = 128;
-                                        img.Margin = new Thickness(4);
+                                        CurrentDisplayImage.Source = new BitmapImage(new Uri(iterator.FullName));
+                                        CurrentDisplayImage.Width = 128;
+                                        CurrentDisplayImage.Height = 128;
+                                        CurrentDisplayImage.Margin = new Thickness(4);
 
-                                        img.Stretch = Stretch.UniformToFill;
+                                        CurrentDisplayImage.Stretch = Stretch.UniformToFill;
 
-                                        img.Tag = iterator.FullName;
-                                        img.MouseLeftButtonUp += 
+                                        CurrentDisplayImage.Tag = iterator.FullName;
+                                        CurrentDisplayImage.MouseLeftButtonUp += 
                                             new MouseButtonEventHandler(
                                                 delegate (object sender, MouseButtonEventArgs e)
                                                 {
-                                                    DisplayImage((string)img.Tag);
+                                                    DisplayImage((string)CurrentDisplayImage.Tag);
                                                     e.Handled = true;
                                                     DismissImageGrid();
                                                 }
                                             );
                                             // end_Handler
-                                        ImageGrid.Children.Add(img);
+                                        ImageGrid.Children.Add(CurrentDisplayImage);
                                     }
                                     // end_delegate
                                 )
@@ -135,25 +144,55 @@ namespace Viewer
         }
 
       // 机能
-        public void DisplayImage(string filename)
+        public void DisplayImage(BitmapSource image)
         {
-            CurrentDisplayFilename = filename;
-            BitmapImage img = new BitmapImage(new Uri(filename));
+            CurrentDisplayImage = image;
 
             // 计算初始缩放
             double factor = 1.0;
-            if (img.Width*factor > MainWin.Width)
-                factor = MainWin.Width/img.Width;
-            if (img.Height*factor > MainWin.Height)
-                factor = MainWin.Height/img.Height;
+            if (CurrentDisplayImage.Width*factor > MainWin.Width)
+                factor = MainWin.Width/CurrentDisplayImage.Width;
+            if (CurrentDisplayImage.Height*factor > MainWin.Height)
+                factor = MainWin.Height/CurrentDisplayImage.Height;
 
             // 设定图像控件
-            ImagePanel.Width = img.Width*factor;
-            ImagePanel.Height = img.Height*factor;
-            ImagePanel.Source = img;
-            
-            // 复位图像
+            ImagePanel.Width = CurrentDisplayImage.Width*factor;
+            ImagePanel.Height = CurrentDisplayImage.Height*factor;
+            ImagePanel.Source = CurrentDisplayImage;
+
+            // 校正图像位置大小
             RestoreImage();
+
+            // 图像信息
+            StringBuilder str = new StringBuilder();
+            str.Append("Pixel Format: " + CurrentDisplayImage.Format + "\n");
+            str.Append("Height: " + CurrentDisplayImage.PixelHeight + " px\n");
+            str.Append("Width: " + CurrentDisplayImage.PixelWidth + " px\n");
+            LblInfo.Content = str.ToString();
+        }
+
+        public void DisplayImage(string filename)
+        {
+            CurrentDisplayFilename = filename;
+            try
+            {
+                DisplayImage(new BitmapImage(new Uri(filename)));
+            }
+            catch (Exception ex)
+            {
+                ImagePanel.Source = null;
+                LblInfo.Content = "文件 " + filename + " 无法解析";
+            }
+
+        }
+
+        private void DisplayTransformInfo()
+        {
+            StringBuilder str = new StringBuilder();
+            str.AppendFormat("Translate: {0:F3}, {1:F3}\n", TransTrans.X, TransTrans.Y);
+            str.AppendFormat("Scale: {0:F3}, {1:F3}\n", ScaleTrans.ScaleX, ScaleTrans.ScaleY);
+            str.AppendFormat("Rotate: {0:F3}", RotateTrans.Angle);
+            LblTransform.Content = str.ToString();
         }
 
         public void DisplayNextImage()
@@ -187,6 +226,70 @@ namespace Viewer
             Environment.Exit(0);
         }
 
+        private void Gray(int method)
+        {
+            // 格式制御
+            if (!graySupported.Contains(CurrentDisplayImage.Format))
+            {
+                LblTransform.Content = "像素格式 " + CurrentDisplayImage.Format + " 不能被灰度化";
+                return;
+            }
+
+            int pixelCount = CurrentDisplayImage.PixelHeight 
+                * CurrentDisplayImage.PixelWidth;
+            int bytePerPixel = CurrentDisplayImage.Format.BitsPerPixel / 8;
+            byte[] pixels = new byte[pixelCount * 4];
+            IList<PixelFormatChannelMask> msaks = CurrentDisplayImage.Format.Masks;
+
+            // 提取像素格式
+            CurrentDisplayImage.CopyPixels(pixels,
+                CurrentDisplayImage.PixelWidth * bytePerPixel,
+                0);
+
+            // 构造新图像
+            // 填充像素
+            byte[] grayPixels = new byte[pixelCount];
+            for (int i=0; i<pixelCount; i++)
+                switch (method)
+                {
+                    case 1:
+                        grayPixels[i] =(byte)
+                            ( pixels[i*bytePerPixel+0]*0.333
+                            + pixels[i*bytePerPixel+1]*0.333
+                            + pixels[i*bytePerPixel+2]*0.333 );
+                        break;
+                    case 2:
+                        grayPixels[i] =(byte)
+                            ( pixels[i*bytePerPixel+0]*0.299
+                            + pixels[i*bytePerPixel+1]*0.587
+                            + pixels[i*bytePerPixel+2]*0.114 );
+                        break;
+                    case 3:
+                        grayPixels[i] =(byte)(
+                            Math.Pow(
+                                Math.Pow(pixels[i*bytePerPixel+0], 2.2)*0.2973
+                                + Math.Pow(pixels[i*bytePerPixel+1], 2.2)*0.6274
+                                + Math.Pow(pixels[i*bytePerPixel+2], 2.2)*0.0753,
+                                1/2.2)
+                            );
+                        break;
+                }
+          
+            // 生成 & 显示
+            DisplayImage( 
+                BitmapSource.Create(
+                    CurrentDisplayImage.PixelWidth,
+                    CurrentDisplayImage.PixelHeight,
+                    CurrentDisplayImage.DpiX,
+                    CurrentDisplayImage.DpiY,
+                    PixelFormats.Gray8,
+                    null,
+                    grayPixels,
+                    CurrentDisplayImage.PixelWidth
+                )
+            );
+        }
+
       // GUI 交互处理
         private void DismissImageGrid()
         {
@@ -202,12 +305,16 @@ namespace Viewer
         {
             TransTrans.X += deltaX;
             TransTrans.Y += deltaY;
+
+            DisplayTransformInfo();
         }
 
         private void TranslateImageTo(double abslouteX, double abslouteY)
         {
             TransTrans.X = abslouteX;
             TransTrans.Y = abslouteY;
+
+            DisplayTransformInfo();
         }
 
         private void RotateImage(double deltaAngle)
@@ -243,6 +350,9 @@ namespace Viewer
             TransTrans.Y = (MainWin.Height - ImagePanel.Height)/2;
 
             RotateTrans.Angle = 0;
+
+            DisplayTransformInfo();
+
         }
 
         private void DragImage()
@@ -252,7 +362,8 @@ namespace Viewer
             TranslateImageTo(mouseOnWin.X - LButtonStart.X, mouseOnWin.Y - LButtonStart.Y);
         }
 
-    // GUI 事件侦听
+      // GUI 事件侦听
+      // 主窗体
         private void MainWin_OnLButtonPressed(object sender, MouseButtonEventArgs e)
         {
             if ((ControlMode & DragMode)!=0)
@@ -283,6 +394,7 @@ namespace Viewer
 
         private void MainWin_OnKeyPress(object sender, KeyEventArgs e)
         {
+            // ESC 退出(无) 重置模式
             if (e.Key == Key.Escape)
             {
                 if (ControlMode == 0)
@@ -290,19 +402,30 @@ namespace Viewer
                 if (ControlMode != 0)
                     ControlMode = 0;
             }
+            // Z 重置图像
             if (e.Key == Key.Z)
                 RestoreImage();
+            // VSR 模式转换
             if (e.Key == Key.V)
                 ControlMode = (ControlMode * CompoundMode) ^ DragMode;
             if (e.Key == Key.S)
                 ControlMode = (ControlMode * CompoundMode) ^ ScaleMode;
             if (e.Key == Key.R)
                 ControlMode = (ControlMode * CompoundMode) ^ RotateMode;
+            if (e.Key == Key.X)
+            {
+                if (ControlPane.Visibility == Visibility.Visible)
+                    ControlPane.Visibility = Visibility.Hidden;
+                else
+                    ControlPane.Visibility = Visibility.Visible;
+            }
+            // L 列表
             if (e.Key == Key.L)
             {
                 DisplayImageGrid();
                 ImageGridPanel.Focus();
             }
+            // 方向键 移动图像(V) 导航(无)
             if (e.Key == Key.Left)
             {
                 if ((ControlMode & DragMode)!=0)
@@ -323,10 +446,11 @@ namespace Viewer
             if (e.Key == Key.Down)
                 if ((ControlMode & DragMode)!=0)
                     TranslateImage(0, KeyMoveFactor);
+            // JK/PgUp/PgDn 导航
             if (e.Key == Key.J)
-                DisplayPrevImage();
-            if (e.Key == Key.K)
                 DisplayNextImage();
+            if (e.Key == Key.K)
+                DisplayPrevImage();
             if (e.Key == Key.PageUp)
                 DisplayPrevImage();
             if (e.Key == Key.PageDown)
@@ -345,17 +469,71 @@ namespace Viewer
             if ((ControlMode & ScaleMode) != 0)
                 ScaleImage(e.Delta * WheelScaleFactor);
         }
-
+      // 关闭按钮
         private void OnClickXButton(object sender, RoutedEventArgs e)
         {
             ExitApp();
         }
-
+      // 图像阵列
         private void ImageGridPanel_KeyDown(object sender, KeyEventArgs e)
         {
             if  (e.Key == Key.Escape)
                 DismissImageGrid();
             e.Handled = true;
+        }
+      // 控制板
+        private void ControlPane_KeyDown(object sender, KeyEventArgs e)
+        {
+            //e.Handled = true;
+        }
+
+        private void BtnPrev_Click(object sender, RoutedEventArgs e)
+        {
+            DisplayPrevImage();
+        }
+
+        private void BtnReload_Click(object sender, RoutedEventArgs e)
+        {
+            DisplayImage(CurrentDisplayFilename);
+        }
+
+        private void BtnNext_Click(object sender, RoutedEventArgs e)
+        {
+            DisplayNextImage();
+        }
+
+        private void BtnMove_Click(object sender, RoutedEventArgs e)
+        {
+            ControlMode = (ControlMode * CompoundMode) ^ DragMode;
+        }
+
+        private void BtnScale_Click(object sender, RoutedEventArgs e)
+        {
+            ControlMode = (ControlMode * CompoundMode) ^ ScaleMode;
+        }
+
+        private void BtnRotate_Click(object sender, RoutedEventArgs e)
+        {
+            ControlMode = (ControlMode * CompoundMode) ^ RotateMode;
+        }
+
+        private void BtnGray1_Click(object sender, RoutedEventArgs e)
+        {
+            Gray(1);
+        }
+
+        private void BtnGray2_Click(object sender, RoutedEventArgs e)
+        {
+            Gray(2);
+        }
+        private void BtnGray3_Click(object sender, RoutedEventArgs e)
+        {
+            Gray(3);
+        }
+
+        private void BtnReset_Click(object sender, RoutedEventArgs e)
+        {
+            RestoreImage();
         }
     }
 }
