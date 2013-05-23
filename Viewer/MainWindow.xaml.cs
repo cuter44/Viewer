@@ -64,6 +64,12 @@ namespace Viewer
             PixelFormats.Bgr32,
             PixelFormats.Bgra32
         };
+        List<PixelFormat> grayBarSupported = new List<PixelFormat> {
+            PixelFormats.Gray2,
+            PixelFormats.Gray4,
+            PixelFormats.Gray8,
+            PixelFormats.Gray16
+        };
 
         public MainWindow()
         {
@@ -149,7 +155,7 @@ namespace Viewer
             CurrentDisplayImage = image;
 
             // 计算初始缩放
-            double factor = 1.0;
+            double factor = CurrentDisplayImage.DpiX / 96.0;
             if (CurrentDisplayImage.Width*factor > MainWin.Width)
                 factor = MainWin.Width/CurrentDisplayImage.Width;
             if (CurrentDisplayImage.Height*factor > MainWin.Height)
@@ -254,22 +260,22 @@ namespace Viewer
                 {
                     case 1:
                         grayPixels[i] =(byte)
-                            ( pixels[i*bytePerPixel+0]*0.333
+                            ( pixels[i*bytePerPixel+2]*0.333
                             + pixels[i*bytePerPixel+1]*0.333
-                            + pixels[i*bytePerPixel+2]*0.333 );
+                            + pixels[i*bytePerPixel+0]*0.333 );
                         break;
                     case 2:
                         grayPixels[i] =(byte)
-                            ( pixels[i*bytePerPixel+0]*0.299
+                            ( pixels[i*bytePerPixel+2]*0.299
                             + pixels[i*bytePerPixel+1]*0.587
-                            + pixels[i*bytePerPixel+2]*0.114 );
+                            + pixels[i*bytePerPixel+0]*0.114 );
                         break;
                     case 3:
                         grayPixels[i] =(byte)(
                             Math.Pow(
-                                Math.Pow(pixels[i*bytePerPixel+0], 2.2)*0.2973
+                                Math.Pow(pixels[i*bytePerPixel+2], 2.2)*0.2973
                                 + Math.Pow(pixels[i*bytePerPixel+1], 2.2)*0.6274
-                                + Math.Pow(pixels[i*bytePerPixel+2], 2.2)*0.0753,
+                                + Math.Pow(pixels[i*bytePerPixel+0], 2.2)*0.0753,
                                 1/2.2)
                             );
                         break;
@@ -288,6 +294,37 @@ namespace Viewer
                     CurrentDisplayImage.PixelWidth
                 )
             );
+        }
+
+        private void CalcGrayBarDiagram()
+        {
+            if (!grayBarSupported.Contains(CurrentDisplayImage.Format))
+            {
+                LblTransform.Content = "像素格式 " + CurrentDisplayImage.Format + " 不可以计算灰度直方图";
+                return;
+            }
+            
+            int pixelCount = CurrentDisplayImage.PixelHeight * CurrentDisplayImage.PixelWidth;
+            int bucketSize = Math.Min(256, 1<<(CurrentDisplayImage.Format.BitsPerPixel));
+            int[] count = new int[bucketSize];
+            int maxOfCount = 0;
+            byte[] pixels = new byte[pixelCount];
+
+            CurrentDisplayImage.CopyPixels(pixels, CurrentDisplayImage.PixelWidth, 0);
+            for (int i=0; i<pixelCount; i++)
+                if ((++count[pixels[i]])>maxOfCount)
+                    maxOfCount = count[pixels[i]];
+
+            for (int i=0; i<bucketSize; i++)
+            {
+                Rectangle rect = new Rectangle();
+                rect.Width = 1;
+                rect.Height = BarDiagram.Height * count[i]/maxOfCount;
+                Canvas.SetLeft(rect, i);
+                Canvas.SetTop(rect, BarDiagram.Height-rect.Height);
+                
+                BarDiagram.Children.Add(rect);
+            }
         }
 
       // GUI 交互处理
@@ -534,6 +571,11 @@ namespace Viewer
         private void BtnReset_Click(object sender, RoutedEventArgs e)
         {
             RestoreImage();
+        }
+
+        private void BtnGrayBarDiag_Click(object sender, RoutedEventArgs e)
+        {
+            CalcGrayBarDiagram();
         }
     }
 }

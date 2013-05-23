@@ -62,7 +62,7 @@
                 <ColumnDefinition Width="64" />
             </Grid.ColumnDefinitions>
             <Canvas x:Name ="BarDiagram"
-                    Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" />
+                    Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Background="White" />
             <Label x:Name="LblInfo"
                    Grid.Row="1" Grid.ColumnSpan="4"
                    Foreground="White" ScrollViewer.CanContentScroll="True" />
@@ -133,7 +133,7 @@
                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="White"/>
             <Button Content="灰度"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                    Grid.Row="8" Grid.Column="1" Tag="3"/>
+                    Grid.Row="8" Grid.Column="1" Tag="3" Click="BtnGrayBarDiag_Click"/>
             <Button Content="RGB"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                     Grid.Row="8" Grid.Column="2" Tag="3"/>
