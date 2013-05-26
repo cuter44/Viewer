@@ -64,7 +64,7 @@ namespace Viewer
             PixelFormats.Bgr32,
             PixelFormats.Bgra32
         };
-        List<PixelFormat> grayBarSupported = new List<PixelFormat> {
+        List<PixelFormat> grayHistogramSupported = new List<PixelFormat> {
             PixelFormats.Gray2,
             PixelFormats.Gray4,
             PixelFormats.Gray8,
@@ -180,16 +180,7 @@ namespace Viewer
         public void DisplayImage(string filename)
         {
             CurrentDisplayFilename = filename;
-            try
-            {
-                DisplayImage(new BitmapImage(new Uri(filename)));
-            }
-            catch (Exception ex)
-            {
-                ImagePanel.Source = null;
-                LblInfo.Content = "文件 " + filename + " 无法解析";
-            }
-
+            DisplayImage(new BitmapImage(new Uri(filename)));
         }
 
         private void DisplayTransformInfo()
@@ -296,12 +287,12 @@ namespace Viewer
             );
         }
 
-        private void CalcGrayBarDiagram()
+        private int[] CalcGrayHistogram()
         {
-            if (!grayBarSupported.Contains(CurrentDisplayImage.Format))
+            if (!grayHistogramSupported.Contains(CurrentDisplayImage.Format))
             {
                 LblTransform.Content = "像素格式 " + CurrentDisplayImage.Format + " 不可以计算灰度直方图";
-                return;
+                return(null);
             }
             
             int pixelCount = CurrentDisplayImage.PixelHeight * CurrentDisplayImage.PixelWidth;
@@ -315,16 +306,56 @@ namespace Viewer
                 if ((++count[pixels[i]])>maxOfCount)
                     maxOfCount = count[pixels[i]];
 
+            Histogram.Children.Clear();
             for (int i=0; i<bucketSize; i++)
             {
                 Rectangle rect = new Rectangle();
-                rect.Width = 1;
-                rect.Height = BarDiagram.Height * count[i]/maxOfCount;
-                Canvas.SetLeft(rect, i);
-                Canvas.SetTop(rect, BarDiagram.Height-rect.Height);
+                rect.Width = Histogram.ActualWidth / bucketSize;
+                rect.Height = Histogram.ActualHeight * ((double)count[i]/maxOfCount);
+                Canvas.SetLeft(rect, i*rect.Width);
+                Canvas.SetTop(rect, Histogram.ActualHeight-rect.Height);
+                rect.Stroke = Brushes.White;
+                rect.Fill = Brushes.White;
                 
-                BarDiagram.Children.Add(rect);
+                Histogram.Children.Add(rect);
             }
+            return(count);
+        }
+
+        private void GrayHistogramEqualize()
+        {
+            int[] count = CalcGrayHistogram();
+
+            int L = count.Length;
+            byte[] remap = new byte[L];
+            int pixelCount = CurrentDisplayImage.PixelHeight * CurrentDisplayImage.PixelWidth;
+            double cumulant = 0.0;
+
+            for (int i=0; i<L; i++)
+            {
+                cumulant += (double)count[i]/pixelCount;
+                remap[i] = (byte)((L-1) * cumulant + 0.5);
+            }
+
+            byte[] pixels = new byte[pixelCount];
+            CurrentDisplayImage.CopyPixels(pixels, CurrentDisplayImage.PixelWidth, 0);
+            for (int i=0; i<pixelCount; i++)
+                pixels[i] = remap[pixels[i]];
+
+            DisplayImage(
+                BitmapSource.Create(
+                    CurrentDisplayImage.PixelWidth,
+                    CurrentDisplayImage.PixelHeight,
+                    CurrentDisplayImage.DpiX,
+                    CurrentDisplayImage.DpiY,
+                    PixelFormats.Gray8,
+                    null,
+                    pixels,
+                    CurrentDisplayImage.PixelWidth
+                )
+            );
+
+            CalcGrayHistogram();
         }
 
       // GUI 交互处理
@@ -573,9 +604,14 @@ namespace Viewer
             RestoreImage();
         }
 
-        private void BtnGrayBarDiag_Click(object sender, RoutedEventArgs e)
+        private void BtnGrayHistogram_Click(object sender, RoutedEventArgs e)
         {
-            CalcGrayBarDiagram();
+            CalcGrayHistogram();
+        }
+
+        private void GrayHistogramEqualize_click(object sender, RoutedEventArgs e)
+        {
+            GrayHistogramEqualize();
         }
     }
 }

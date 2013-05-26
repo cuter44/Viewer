@@ -44,9 +44,11 @@
               Background="Black" Opacity="0.85"
               KeyDown="ControlPane_KeyDown">
             <Grid.RowDefinitions>
-                <RowDefinition Height="128"/>
+                <RowDefinition Height="192"/>
                 <RowDefinition Height="64"/>
                 <RowDefinition Height="64"/>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="32"/>
                 <RowDefinition Height="32"/>
                 <RowDefinition Height="32"/>
                 <RowDefinition Height="32"/>
@@ -61,8 +63,8 @@
                 <ColumnDefinition Width="64" />
                 <ColumnDefinition Width="64" />
             </Grid.ColumnDefinitions>
-            <Canvas x:Name ="BarDiagram"
-                    Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Background="White" />
+            <Canvas x:Name ="Histogram"
+                    Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" />
             <Label x:Name="LblInfo"
                    Grid.Row="1" Grid.ColumnSpan="4"
                    Foreground="White" ScrollViewer.CanContentScroll="True" />
@@ -97,25 +99,25 @@
                     Click="BtnMove_Click"/>
             <Button Content="置中"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                    Grid.Row="4" Grid.Column="2"/>
+                    Grid.Row="4" Grid.Column="2" IsEnabled="False"/>
             <Button Content="缩放(S)"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                     Grid.Row="5" Grid.Column="0" Click="BtnScale_Click"/>
             <Button Content="适应"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                    Grid.Row="5" Grid.Column="2"/>
+                    Grid.Row="5" Grid.Column="2" IsEnabled="False"/>
             <Button Content="旋转(R)"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                     Grid.Row="6" Grid.Column="0" Click="BtnRotate_Click"/>
             <Button Content="逆 90°"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                    Grid.Row="6" Grid.Column="1"/>
+                    Grid.Row="6" Grid.Column="1" IsEnabled="False"/>
             <Button Content="铅直"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                    Grid.Row="6" Grid.Column="2"/>
+                    Grid.Row="6" Grid.Column="2" IsEnabled="False"/>
             <Button Content="顺 90°"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                    Grid.Row="6" Grid.Column="3"/>
+                    Grid.Row="6" Grid.Column="3" IsEnabled="False"/>
             <Label Content="灰度(8位)"
                    Grid.Row="7" 
                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="White"/>
@@ -133,10 +135,13 @@
                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="White"/>
             <Button Content="灰度"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                    Grid.Row="8" Grid.Column="1" Tag="3" Click="BtnGrayBarDiag_Click"/>
+                    Grid.Row="9" Grid.Column="0" Click="BtnGrayHistogram_Click"/>
+            <Button Content="均衡化"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="9" Grid.Column="1" Click="GrayHistogramEqualize_click"/>
             <Button Content="RGB"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                    Grid.Row="8" Grid.Column="2" Tag="3"/>
+                    Grid.Row="10" Grid.Column="0" IsEnabled="False"/>
         </Grid>
         <ScrollViewer x:Name="ImageGridPanel"
                       VerticalScrollBarVisibility="Auto"
