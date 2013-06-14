@@ -55,6 +55,7 @@
                 <RowDefinition Height="32"/>
                 <RowDefinition Height="32"/>
                 <RowDefinition Height="32"/>
+                <RowDefinition Height="32"/>
                 <RowDefinition Height="1*"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -142,6 +143,12 @@
             <Button Content="RGB"
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                     Grid.Row="10" Grid.Column="0" IsEnabled="False"/>
+            <Label Content="边缘"
+                   Grid.Row="11" Grid.Column="0"
+                   HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="White"/>
+            <Button Content="Laplacian"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Grid.Row="11" Grid.Column="1" Click="Laplacian_Click"/>
         </Grid>
         <ScrollViewer x:Name="ImageGridPanel"
                       VerticalScrollBarVisibility="Auto"

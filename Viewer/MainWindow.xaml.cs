@@ -67,8 +67,8 @@ namespace Viewer
         List<PixelFormat> grayHistogramSupported = new List<PixelFormat> {
             PixelFormats.Gray2,
             PixelFormats.Gray4,
-            PixelFormats.Gray8,
-            PixelFormats.Gray16
+            PixelFormats.Gray8
+            //PixelFormats.Gray16
         };
 
         public MainWindow()
@@ -326,6 +326,8 @@ namespace Viewer
         {
             int[] count = CalcGrayHistogram();
 
+            if (count == null)
+                return;
             int L = count.Length;
             byte[] remap = new byte[L];
             int pixelCount = CurrentDisplayImage.PixelHeight * CurrentDisplayImage.PixelWidth;
@@ -356,6 +358,76 @@ namespace Viewer
             );
 
             CalcGrayHistogram();
+        }
+
+        private void Laplacian()
+        {
+            if (!grayHistogramSupported.Contains(CurrentDisplayImage.Format))
+            {
+                LblTransform.Content = "像素格式 " + CurrentDisplayImage.Format + " 不可以计算灰度直方图";
+                return;
+            }
+
+            int count = CurrentDisplayImage.PixelHeight * CurrentDisplayImage.PixelWidth;
+            int width = CurrentDisplayImage.PixelWidth;
+            int height = CurrentDisplayImage.PixelHeight;
+            byte[] pixels = new byte[count];
+            CurrentDisplayImage.CopyPixels(pixels, CurrentDisplayImage.PixelWidth, 0);
+
+            int[] mod_pixels_int = new int[count];
+            // center
+            for (int i=0; i<count; i++)
+                mod_pixels_int[i] = pixels[i]*8;
+            // nw
+            for (int i=1; i<=height-1; i++)
+                for (int j=1; j<=width-1; j++)
+                    mod_pixels_int[i*width+j] -= pixels[(i-1)*width+(j-1)];
+            // n
+            for (int i=1; i<=height-1; i++)
+                for (int j=0; j<=width-1; j++)
+                    mod_pixels_int[i*width+j] -= pixels[(i-1)*width+(j)];
+            // ne
+            for (int i=1; i<=height-1; i++)
+                for (int j=0; j<=width-2; j++)
+                    mod_pixels_int[i*width+j] -= pixels[(i-1)*width+(j+1)];
+            // w
+            for (int i=0; i<=height-1; i++)
+                for (int j=1; j<=width-1; j++)
+                    mod_pixels_int[i*width+j] -= pixels[(i)*width+(j-1)];
+            // e
+            for (int i=0; i<=height-1; i++)
+                for (int j=0; j<=width-2; j++)
+                    mod_pixels_int[i*width+j] -= pixels[(i)*width+(j+1)];
+            // sw
+            for (int i=0; i<=height-2; i++)
+                for (int j=1; j<=width-1; j++)
+                    mod_pixels_int[i*width+j] -= pixels[(i+1)*width+(j-1)];
+            // s
+            for (int i=0; i<=height-2; i++)
+                for (int j=0; j<=width-1; j++)
+                    mod_pixels_int[i*width+j] -= pixels[(i+1)*width+(j)];
+            // se
+            for (int i=0; i<=height-2; i++)
+                for (int j=0; j<=width-2; j++)
+                    mod_pixels_int[i*width+j] -= pixels[(i+1)*width+(j+1)];
+
+            byte[] mod_pixels = new byte[count];
+            for (int i=0; i<count; i++)
+                mod_pixels[i] = Math.Max(Byte.MinValue, (byte)Math.Min((int)Byte.MaxValue, mod_pixels_int[i]));
+
+            DisplayImage(
+                BitmapSource.Create(
+                    CurrentDisplayImage.PixelWidth,
+                    CurrentDisplayImage.PixelHeight,
+                    CurrentDisplayImage.DpiX,
+                    CurrentDisplayImage.DpiY,
+                    PixelFormats.Gray8,
+                    null,
+                    mod_pixels,
+                    CurrentDisplayImage.PixelWidth
+                )
+            );
+            return;
         }
 
       // GUI 交互处理
@@ -612,6 +684,11 @@ namespace Viewer
         private void GrayHistogramEqualize_click(object sender, RoutedEventArgs e)
         {
             GrayHistogramEqualize();
+        }
+
+        private void Laplacian_Click(object sender, RoutedEventArgs e)
+        {
+            Laplacian();
         }
     }
 }
